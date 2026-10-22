@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>할 일 목록</title>
+  <style>
+    body { font-family: -apple-system, sans-serif; max-width: 560px; margin: 40px auto; padding: 0 16px; background: #e6f2ff; color: #222; }
+    h1 { font-size: 1.5rem; }
+    ul { list-style: none; padding: 0; display: grid; grid-template-columns: 1fr; gap: 16px; }
+    li { display: flex; flex-direction: column; gap: 12px; background: #fff; border-radius: 14px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+    li.done .title { text-decoration: line-through; color: #999; }
+    .card-head { display: flex; justify-content: space-between; align-items: center; }
+    .title { font-size: 1.15rem; font-weight: 600; }
+    .meta { font-size: .85rem; color: #777; display: flex; justify-content: space-between; border-top: 1px solid #eee; padding-top: 12px; }
+    .badge { font-size: .8rem; padding: 2px 8px; border-radius: 999px; background: #fff4d6; color: #a06a00; }
+    li.done .badge { background: #e3f7e8; color: #2a7a3d; }
+    .emoji { font-size: 1.4rem; }
+    #status { color: #777; }
+    .error { color: #c00 !important; }
+  </style>
+</head>
+<body>
+  <p><a href="index.html">← 처음으로</a></p>
+  <h1>📝 할 일 목록</h1>
+  <p id="status">불러오는 중...</p>
+  <ul id="list"></ul>
+
+  <script>
+    const SUPABASE_URL = "https://ddpehoodkbcqmvhxomkx.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_9drSX4_AIuNsyieNWNJF8A_0Sd51CZ5";
+
+    async function loadTodos() {
+      const status = document.getElementById("status");
+      const list = document.getElementById("list");
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/test_todos?select=*&order=date.asc`, {
+          headers: { apikey: SUPABASE_KEY }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const todos = await res.json();
+
+        const doneCount = todos.filter(t => t.done).length;
+        status.textContent = `총 ${todos.length}개 · 완료 ${doneCount}개`;
+        for (const todo of todos) {
+          const li = document.createElement("li");
+          if (todo.done) li.classList.add("done");
+          li.innerHTML = `
+            <div class="card-head">
+              <span class="emoji">${todo.done ? "✅" : "🔲"}</span>
+              <span class="badge">${todo.done ? "완료" : "진행 중"}</span>
+            </div>
+            <span class="title"></span>
+            <div class="meta">
+              <span>${todo.date ?? "-"}</span>
+              <span>수량 ${todo.amount ?? "-"}</span>
+            </div>`;
+          li.querySelector(".title").textContent = todo.title;
+          list.appendChild(li);
+        }
+      } catch (err) {
+        status.textContent = `불러오기 실패: ${err.message}`;
+        status.classList.add("error");
+      }
+    }
+
+    loadTodos();
+  </script>
+</body>
+</html>
